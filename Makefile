@@ -1,23 +1,34 @@
+CC = gcc
+CFLAGS = -Wall -Wextra -g
+SRC_DIR = ./src
+DS_SRC_DIR = $(SRC_DIR)/ds
+TESTS_DIR = ./tests
+BIN_DIR = ./bin
+DS_OBJS = $(patsubst $(DS_SRC_DIR)/%.c,$(BIN_DIR)/%.o,$(wildcard $(DS_SRC_DIR)/*.c))
+TEST_SRC = $(wildcard $(TESTS_DIR)/heapq_test_i.c)
+TEST_EXEC = $(BIN_DIR)/tests
 
-CXX       := gcc
-CXX_FLAGS := --std=c23 -ggdb
+# Create directories if they don't exist
+prepare:
+	@mkdir -p $(BIN_DIR)
 
-BIN     := bin
-SRC     := src
-INCLUDE := include
+# Compile data structures source files
+$(BIN_DIR)/%.o: $(DS_SRC_DIR)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-LIBRARIES   :=
-EXECUTABLE  := main
+# Compile tests source files and link with data structures object files
+$(TEST_EXEC): $(TEST_SRC) $(DS_OBJS)
+	$(CC) $(CFLAGS) -I $(DS_SRC_DIR) $^ -o $@
 
+# Compile all
+all: prepare $(DS_OBJS) $(TEST_EXEC)
 
-all: $(BIN)/$(EXECUTABLE)
+# Run the tests
+run: $(TEST_EXEC)
+	@./$(TEST_EXEC)
 
-run: clean all
-	clear
-	./$(BIN)/$(EXECUTABLE)
-
-$(BIN)/$(EXECUTABLE): $(SRC)/*.c $(SRC)/ds/*.c
-	$(CXX) $(CXX_FLAGS) -I$(INCLUDE) $^ -o $@ $(LIBRARIES)
-
+# Clean object files and executables
 clean:
-	-rm $(BIN)/*
+	@rm -f $(BIN_DIR)/*.o $(TEST_EXEC)
+
+.PHONY: all prepare run clean

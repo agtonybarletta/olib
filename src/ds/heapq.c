@@ -10,13 +10,13 @@ int HEAPQ___INITIAL_BUFFER_SIZE = 256;
 int HEAPQ___BUFFER_GROWTH_FACTOR = 2;
 
 void Heapq__for_each(Heapq* self, void (*function)(void*)) {
-    for(int i = 0; i < self->size; i++) {
+    for(unsigned long i = 0; i < self->size; i++) {
         function(self->_buffer[i]);
     }
 }
 
 void Heapq___heapify_from(Heapq* self, unsigned long i) {
-    if (i < 0 || i >= self->size) {
+    if (i >= self->size) {
         printf("i out of bound");
         exit(-1);
     }
@@ -24,10 +24,8 @@ void Heapq___heapify_from(Heapq* self, unsigned long i) {
         return;
     }
 
-    unsigned long parent = (i-1)/2;
+    long parent = (i-1)/2;
     
-    //printf("parent: %lu\n", parent);
-
     if (parent >= 0) {
         if (self->_less_than(self->_buffer[i], self->_buffer[parent]) > 0) {
             void* tmp = self->_buffer[i];
@@ -38,7 +36,7 @@ void Heapq___heapify_from(Heapq* self, unsigned long i) {
     }
 }
 
-void Heapq__heapify(Heapq* self) {
+void Heapq___heapify(Heapq* self) {
      Heapq___heapify_from(self, 0ul);
 }
 
@@ -51,7 +49,7 @@ void Heapq___extend_buffer(Heapq* self) {
         exit(-1);
     }
     unsigned long new_buffer_size = self->_buffer_size *HEAPQ___BUFFER_GROWTH_FACTOR;
-    void** new_buffer = calloc(sizeof(void*), new_buffer_size);
+    void** new_buffer = calloc(new_buffer_size, sizeof(void*));
     memcpy(new_buffer, self->_buffer, self->_buffer_size);
     free(self->_buffer);
     self->_buffer = *new_buffer;
@@ -70,6 +68,23 @@ void Heapq__insert(Heapq* self, void* object) {
     
 }
 
+void* Heapq__top(Heapq* self) {
+    
+    void* top = self->_buffer[0ul];
+    self->_buffer[0ul] = self->_buffer[self->size -1];
+    self->size -= 1;
+    Heapq___heapify_from(self, 0ul);
+    return top;
+    
+}
+
+HeapqMethods HEAPQ_MRTHODS = {
+    .insert = &Heapq__insert,
+    .top = &Heapq__top,
+    .for_each = &Heapq__for_each
+    
+};
+
 Heapq* Heapq__init(int (*less_than)(void* arg1, void* arg2)) {
     Heapq* self = malloc(sizeof(Heapq));    
     if (self == NULL) {
@@ -81,9 +96,7 @@ Heapq* Heapq__init(int (*less_than)(void* arg1, void* arg2)) {
         ._buffer_size = HEAPQ___INITIAL_BUFFER_SIZE,
         .size = 0,
         ._less_than = less_than,
-        .heapify = &Heapq__heapify,
-        .insert = &Heapq__insert,
-        .for_each = &Heapq__for_each
+        .m = &HEAPQ_MRTHODS
     };
     return self;
 }
